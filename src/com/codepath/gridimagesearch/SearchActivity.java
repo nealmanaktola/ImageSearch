@@ -6,31 +6,34 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
+import android.app.DialogFragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.SearchView;
+import android.widget.SearchView.OnQueryTextListener;
 import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
-public class SearchActivity extends Activity {
-	EditText etQuery;
+public class SearchActivity extends FragmentActivity {
 	GridView gvResults;
-	Button btnSearch;
 	ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
 	ImageResultArrayAdapter imageAdapter;
 	FilterSettings settings;
+	String mquery;
+	SearchView searchView;
 	
 	private final int REQUEST_CODE = 20;
 	
@@ -40,18 +43,22 @@ public class SearchActivity extends Activity {
 		setContentView(R.layout.activity_search);
 		setupViews();
 		clearSettings();
+		mquery = "";
 		imageAdapter = new ImageResultArrayAdapter(this,imageResults);
 		gvResults.setAdapter(imageAdapter);
 		gvResults.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,int position, long id) {
-				Intent i = new Intent(getApplicationContext(), ImageDisplayActivity.class);
+
+		//		Intent i = new Intent(getApplicationContext(), ImageDisplayActivity.class);
 				ImageResult imageResult = imageResults.get(position);
-				Log.d("image", "thumb: " + imageResult.getThumbUrl());
-				Log.d("image", "full: " + imageResult.getFullUrl());
-				i.putExtra("url", imageResult.getFullUrl());
-				startActivity(i);				
+				showImageDialog(imageResult.getFullUrl());
+			//	Log.d("image", "thumb: " + imageResult.getThumbUrl());
+			//	Log.d("image", "full: " + imageResult.getFullUrl());
+			//	i.putExtra("url", imageResult.getFullUrl());
+			//	startActivity(i);		
+		
 			}
 			
 		});
@@ -66,11 +73,36 @@ public class SearchActivity extends Activity {
 			
 		});
 	}
+	
+	private void showImageDialog(String url) {
+      FragmentManager fm = getFragmentManager();
+      ImageDialog imageDialog = ImageDialog.newInstance(url);
+      imageDialog.setStyle(DialogFragment.STYLE_NO_TITLE, 0);
+      imageDialog.show(fm, "fragment_image_display");
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// TODO Auto-generated method stub
 		getMenuInflater().inflate(R.menu.main,menu);
-		return true;
+		MenuItem searchItem = menu.findItem(R.id.action_search);
+	    searchView = (SearchView) searchItem.getActionView();
+		
+	    searchView.setOnQueryTextListener(new OnQueryTextListener() {
+	        @Override
+	        public boolean onQueryTextSubmit(String query) {
+	        	mquery = query;
+	    		imageAdapter.clear();
+	    		customLoadMoreDataFromApi(0);	
+	            return true;
+	        }
+
+	        @Override
+	        public boolean onQueryTextChange(String newText) {
+	            return false;
+	        }
+	    });
+	    return super.onCreateOptionsMenu(menu);
 	}
 	private void clearSettings()
 	{
@@ -94,9 +126,7 @@ public class SearchActivity extends Activity {
 	}
 	public void setupViews() {
 		// TODO Auto-generated method stub
-		etQuery = (EditText) findViewById(R.id.etQuery);
 		gvResults = (GridView) findViewById(R.id.gvResults);
-		btnSearch = (Button) findViewById(R.id.btnSearch);
 				
 	}
 	
@@ -134,13 +164,12 @@ public class SearchActivity extends Activity {
 	}
 	public void customLoadMoreDataFromApi(int offset) {
 
-		
-		String query = etQuery.getText().toString();
+	
 		//Add Settings to Query
 		AsyncHttpClient client = new AsyncHttpClient();
 		String settingsStr = createSettingsString();
 		client.get("https://ajax.googleapis.com/ajax/services/search/images?rsz=8&" 
-				+ "start=" + offset * 8 + settingsStr + "&v=1.0&q=" + Uri.encode(query),
+				+ "start=" + offset * 8 + settingsStr + "&v=1.0&q=" + Uri.encode(mquery),
 			new JsonHttpResponseHandler(){
 					public void onSuccess(JSONObject response) {
 						JSONArray imageJsonResults = null;
@@ -155,10 +184,8 @@ public class SearchActivity extends Activity {
 				});
 	}
 	public void onImageSearch(View v) {
-		imageResults.clear();
+		imageAdapter.clear();
 		customLoadMoreDataFromApi(0);		
-		customLoadMoreDataFromApi(1);	
-		customLoadMoreDataFromApi(2);	
 	}
 	
 }

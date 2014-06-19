@@ -6,5 +6,11 @@
         android:showAsAction="always"
         android:onClick="onSettingsClick"
         android:title="Settings">
-    </item>    
+    </item>
+     <item 
+          android:id="@+id/action_search"
+          android:orderInCategory="5"
+          android:title="Search"
+          android:showAsAction="ifRoom|collapseActionView"
+          android:actionViewClass="android.widget.SearchView" />    
 </menu>
