@@ -24,3 +24,6 @@ Advanced: Use the ActionBar SearchView or custom layout as the query box instead
 Advanced: Replace Image Acitvity with a lightweight modal overlay  
 
 
+  
+![alt text](http://giant.gfycat.com/EnlightenedEsteemedGreendarnerdragonfly.gif "Logo Title Text 1")
+    
